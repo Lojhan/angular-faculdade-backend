@@ -57,7 +57,6 @@ export class AuthService {
   async verifyJwt(token: string): Promise<any> {
     try {
       const valid = await this.jwtService.verify(token);
-      console.log(valid);
       if (valid) {
         return this.jwtService.sign({ username: valid.username });
       }

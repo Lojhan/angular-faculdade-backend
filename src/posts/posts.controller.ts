@@ -56,8 +56,13 @@ export class PostsController {
 
   @Patch(':id')
   @UseGuards(AuthGuard())
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    return this.postsService.update(+id, updatePostDto);
+  @UseInterceptors(FileInterceptor('image'))
+  update(
+    @Param('id') id: string,
+    @Body() updatePostDto: UpdatePostDto,
+    @UploadedFile() file: any,
+  ) {
+    return this.postsService.update(+id, updatePostDto, file);
   }
 
   @Delete(':id')

@@ -13,14 +13,7 @@ export class PostsService {
     private postRepository: PostRepository,
   ) {}
 
-  async create(
-    createPostDto: CreatePostDto,
-    image: {
-      originalname: string;
-      buffer: WithImplicitCoercion<ArrayBuffer | SharedArrayBuffer>;
-    },
-    user: User,
-  ) {
+  async create(createPostDto: CreatePostDto, image: any, user: User) {
     try {
       const post = await this.postRepository.createPost(createPostDto, user);
       fs.writeFile(
@@ -86,12 +79,27 @@ export class PostsService {
     return post;
   }
 
-  update(id: number, updatePostDto: UpdatePostDto) {
-    console.log(updatePostDto);
-    return `This action updates a #${id} post`;
+  update(id: number, updatePostDto: UpdatePostDto, file: any) {
+    delete updatePostDto['image'];
+
+    try {
+      const result = this.postRepository.update(id, { ...updatePostDto });
+      fs.writeFile(
+        `./images/posts/${id}.jpeg`,
+        Buffer.from(file.buffer),
+        function (err) {
+          if (err) {
+            throw new InternalServerErrorException(err);
+          }
+        },
+      );
+      return result;
+    } catch (err) {
+      throw new InternalServerErrorException(err);
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} post`;
+  remove(id: number): Promise<any> {
+    return this.postRepository.delete(id);
   }
 }
