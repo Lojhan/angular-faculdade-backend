@@ -27,7 +27,9 @@ export class Post extends BaseEntity {
   @Column()
   subtitle: string;
 
-  @Column()
+  @Column({
+    length: 10000,
+  })
   text: string;
 
   @Column({ default: () => `now()` })
