@@ -57,7 +57,10 @@ export class PostsService {
   }
 
   async findOne(_id: string) {
-    const post = await this.postModel.findOne({ _id });
+    const post = await this.postModel.findOne({ _id }).populate('user');
+
+    delete post.user.password;
+    delete post.user.salt;
     return post;
   }
 
