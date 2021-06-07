@@ -45,12 +45,12 @@ export class PostsController {
 
   @Get('user/:id')
   findUserPosts(@Param('id') id: string) {
-    return this.postsService.userPosts(+id);
+    return this.postsService.userPosts(id);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.postsService.findOne(+id);
+    return this.postsService.findOne(id);
   }
 
   @Patch(':id')
@@ -61,12 +61,12 @@ export class PostsController {
     @Body() updatePostDto: UpdatePostDto,
     @UploadedFile() file: any,
   ) {
-    return this.postsService.update(+id, updatePostDto, file);
+    return this.postsService.update(id, updatePostDto, file);
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard())
   remove(@Param('id') id: string) {
-    return this.postsService.remove(+id);
+    return this.postsService.remove(id);
   }
 }

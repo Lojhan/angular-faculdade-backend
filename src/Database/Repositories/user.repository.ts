@@ -1,43 +1,42 @@
-import {
-  ConflictException,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import { EntityRepository, Repository } from 'typeorm';
+import { InternalServerErrorException } from '@nestjs/common';
+import { EntityRepository } from 'typeorm';
 import { AuthCredentialsDto } from '../../auth/dto/auth-credentials.dto';
 import { User } from '../Entities/user.entity';
 import * as bcrypt from 'bcrypt';
+import { Model } from 'mongoose';
+import { UserDocument } from '../Schemas/user.schema';
 
 @EntityRepository(User)
-export class UserRepository extends Repository<User> {
-  async signUp(authCredentialsDto: AuthCredentialsDto): Promise<User> {
+export class UserRepository {
+  async signUp(
+    authCredentialsDto: AuthCredentialsDto,
+    userModel: Model<UserDocument>,
+  ): Promise<UserDocument> {
     const { username, password } = authCredentialsDto;
 
     const salt = await bcrypt.genSalt();
-    const user = new User(
-      username,
-      await this.hashPassoword(password, salt),
-      salt,
-      'adm',
-    );
 
     try {
-      await user.save();
-      return user;
+      return userModel.create({
+        username,
+        password: await this.hashPassoword(password, salt),
+        salt,
+        type: 'adm',
+      });
     } catch (err) {
-      if (err.code == 23505)
-        throw new ConflictException('Username already exists');
-      else throw new InternalServerErrorException();
+      throw new InternalServerErrorException();
     }
   }
 
   async validateUserPassword(
     authCredentialsDto: AuthCredentialsDto,
-  ): Promise<User> {
+    userModel: Model<UserDocument>,
+  ): Promise<UserDocument> {
     const { username, password } = authCredentialsDto;
 
-    const user = await this.findOne({ username });
+    const user = await userModel.findOne({ username });
 
-    if (await user.validatePassword(password)) {
+    if (await this.validatePassword(password, user.password, user.salt)) {
       return user;
     } else {
       return null;
@@ -46,5 +45,14 @@ export class UserRepository extends Repository<User> {
 
   private async hashPassoword(password: string, salt: string): Promise<string> {
     return bcrypt.hash(password, salt);
+  }
+
+  private async validatePassword(
+    inputPassword: string,
+    password: string,
+    salt: string,
+  ): Promise<boolean> {
+    const hash = await bcrypt.hash(inputPassword, salt);
+    return hash == password;
   }
 }

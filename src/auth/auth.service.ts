@@ -4,20 +4,25 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { JwtPayload } from './dto/jwt-payload.dto';
 import { UserRepository } from '../Database/Repositories/user.repository';
 import * as fs from 'fs';
-import { User } from 'src/Database/Entities/user.entity';
+
+import { User, UserDocument } from 'src/Database/Schemas/user.schema';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class AuthService {
+  private userRepository: UserRepository;
+
   constructor(
-    @InjectRepository(UserRepository)
-    private userRepository: UserRepository,
     private jwtService: JwtService,
-  ) {}
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+  ) {
+    this.userRepository = new UserRepository();
+  }
 
   async signUp(
     authCredentialsDto: AuthCredentialsDto,
@@ -25,9 +30,12 @@ export class AuthService {
       originalname: string;
       buffer: WithImplicitCoercion<ArrayBuffer | SharedArrayBuffer>;
     },
-  ): Promise<User> {
+  ): Promise<UserDocument> {
     try {
-      const user = await this.userRepository.signUp(authCredentialsDto);
+      const user = await this.userRepository.signUp(
+        authCredentialsDto,
+        this.userModel,
+      );
       fs.writeFile(
         `./images/profiles/${user.id}.jpeg`,
         Buffer.from(image.buffer),
@@ -46,6 +54,7 @@ export class AuthService {
   async signIn(authCredentialsDto: AuthCredentialsDto): Promise<any> {
     const user = await this.userRepository.validateUserPassword(
       authCredentialsDto,
+      this.userModel,
     );
     if (!user) throw new UnauthorizedException('Invalid credentials');
 

@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from 'src/Database/Entities/user.entity';
+import { UserDocument } from 'src/Database/Schemas/user.schema';
 import { AuthService } from './auth.service';
 import { AuthCredentialsDto } from './dto/auth-credentials.dto';
 import { TokenPayload } from './dto/token-payload.dto';
@@ -21,7 +22,7 @@ export class AuthController {
   signUp(
     @UploadedFile() image: any,
     @Body(ValidationPipe) authCredentialsDto: AuthCredentialsDto,
-  ): Promise<User> {
+  ): Promise<UserDocument> {
     return this.authService.signUp(authCredentialsDto, image);
   }
 
@@ -34,7 +35,6 @@ export class AuthController {
 
   @Post('verify')
   verify(@Body(ValidationPipe) token: TokenPayload): Promise<any> {
-    console.log(token);
     return this.authService.verifyJwt(token.token);
   }
 }
